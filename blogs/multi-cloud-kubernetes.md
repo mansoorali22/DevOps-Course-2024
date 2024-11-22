@@ -47,62 +47,56 @@ At the heart of this setup is **Kubernetes Federation**, which lets you manage m
 
 #### On AWS (EKS):
 
-# Install AWS CLI and eksctl
-aws configure  # Input your AWS credentials
-eksctl create cluster --name aws-cluster --region us-west-2 --nodes 2
-
+- **Install AWS CLI and eksctl**:
+  ```bash
+  aws configure  # Input your AWS credentials
+  eksctl create cluster --name aws-cluster --region us-west-2 --nodes 2kubectl get pods
 
 #### On Google Cloud (GKE):
-
-# Install Google Cloud SDK
-gcloud init  # Authenticate your Google account
-gcloud container clusters create gke-cluster --num-nodes=2 --zone=us-central1-a
-
+- **Install Google Cloud SDK**:
+  ```bash
+  gcloud init  # Authenticate your Google account
+  gcloud container clusters create gke-cluster --num-nodes=2 --zone=us-central1-a
 
 ---
 
 ### Step 2: Install Kubernetes Federation (Kubefed)
 
-# Install kubefedctl
-wget https://github.com/kubernetes-sigs/kubefed/releases/download/v0.8.1/kubefedctl-0.8.1-linux-amd64.tgz
-tar -xzf kubefedctl-0.8.1-linux-amd64.tgz
-sudo mv kubefedctl /usr/local/bin/
-
-
+# 
+- **Install kubefedctl**:
+  ```bash
+  wget https://github.com/kubernetes-sigs/kubefed/releases/download/v0.8.1/kubefedctl-0.8.1-linux-amd64.tgz
+  tar -xzf kubefedctl-0.8.1-linux-amd64.tgz
+  sudo mv kubefedctl /usr/local/bin/
 ---
 
 ### Step 3: Deploy the Federation Control Plane
-Choose one cluster to host the control plane (e.g., AWS).
 
-
-kubefedctl join aws-cluster \
+- **Choose one cluster to host the control plane (e.g., AWS).**:
+  ```bash
+  kubefedctl join aws-cluster \
   --cluster-context aws-cluster \
   --host-cluster-context aws-cluster \
   --add-to-registry \
   --v=2
-
-
 ---
 
 ### Step 4: Join the Other Cluster
-Now, add the Google Cloud cluster to the federation.
-
-
-kubefedctl join gke-cluster \
+- **Now, add the Google Cloud cluster to the federation.**:
+  ```bash
+  kubefedctl join gke-cluster \
   --cluster-context gke-cluster \
   --host-cluster-context aws-cluster \
   --add-to-registry \
   --v=2
 
-
 ---
 
 ### Step 5: Create a Federated Namespace
-
-kubectl create ns demo --context=aws-cluster
-kubefedctl federate ns demo --host-cluster-context aws-cluster
-
-
+-
+  ```bash
+  kubectl create ns demo --context=aws-cluster
+  kubefedctl federate ns demo --host-cluster-context aws-cluster
 ---
 
 ### Step 6: Deploy a Federated Application
@@ -110,48 +104,43 @@ Create a `nginx` deployment that spans both clusters.
 
 Save this as `nginx-deployment.yaml`:
 
-apiVersion: types.kubefed.io/v1beta1
-kind: FederatedDeployment
-metadata:
-  name: nginx
-  namespace: demo
-spec:
-  template:
-    spec:
-      replicas: 3
-      selector:
-        matchLabels:
-          app: nginx
-      template:
-        metadata:
-          labels:
+-
+  ```bash
+  apiVersion: types.kubefed.io/v1beta1
+  kind: FederatedDeployment
+  metadata:
+    name: nginx
+    namespace: demo
+  spec:
+    template:
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
             app: nginx
-        spec:
-          containers:
-          - name: nginx
-            image: nginx
+        template:
+          metadata:
+            labels:
+              app: nginx
+          spec:
+            containers:
+            - name: nginx
+              image: nginx
 
-
-Apply the deployment:
-
-kubectl apply -f nginx-deployment.yaml --context=aws-cluster
-
-
+- **Apply the deployment:**
+  ```bash
+  kubectl apply -f nginx-deployment.yaml --context=aws-cluster
 ---
 
 ### Step 7: Verify the Deployment
 Check the pods on both clusters.
 
-#### On AWS:
-
-kubectl get pods -n demo --context=aws-cluster
-
-
-#### On Google Cloud:
-
-kubectl get pods -n demo --context=gke-cluster
-
-
+- **On AWS:**
+  ```bash
+  kubectl get pods -n demo --context=aws-cluster
+- **On Google Cloud:**
+  ```bash
+    kubectl get pods -n demo --context=gke-cluster
 You should see `nginx` pods running in both clusters.
 
 ---
