@@ -46,62 +46,62 @@ At the heart of this setup is **Kubernetes Federation**, which lets you manage m
 ### Step 1: Set Up Individual Clusters
 
 #### On AWS (EKS):
-\`\`\`bash
+
 # Install AWS CLI and eksctl
 aws configure  # Input your AWS credentials
 eksctl create cluster --name aws-cluster --region us-west-2 --nodes 2
-\`\`\`
+
 
 #### On Google Cloud (GKE):
-\`\`\`bash
+
 # Install Google Cloud SDK
 gcloud init  # Authenticate your Google account
 gcloud container clusters create gke-cluster --num-nodes=2 --zone=us-central1-a
-\`\`\`
+
 
 ---
 
 ### Step 2: Install Kubernetes Federation (Kubefed)
-\`\`\`bash
+
 # Install kubefedctl
 wget https://github.com/kubernetes-sigs/kubefed/releases/download/v0.8.1/kubefedctl-0.8.1-linux-amd64.tgz
 tar -xzf kubefedctl-0.8.1-linux-amd64.tgz
 sudo mv kubefedctl /usr/local/bin/
-\`\`\`
+
 
 ---
 
 ### Step 3: Deploy the Federation Control Plane
 Choose one cluster to host the control plane (e.g., AWS).
 
-\`\`\`bash
+
 kubefedctl join aws-cluster \
   --cluster-context aws-cluster \
   --host-cluster-context aws-cluster \
   --add-to-registry \
   --v=2
-\`\`\`
+
 
 ---
 
 ### Step 4: Join the Other Cluster
 Now, add the Google Cloud cluster to the federation.
 
-\`\`\`bash
+
 kubefedctl join gke-cluster \
   --cluster-context gke-cluster \
   --host-cluster-context aws-cluster \
   --add-to-registry \
   --v=2
-\`\`\`
+
 
 ---
 
 ### Step 5: Create a Federated Namespace
-\`\`\`bash
+
 kubectl create ns demo --context=aws-cluster
 kubefedctl federate ns demo --host-cluster-context aws-cluster
-\`\`\`
+
 
 ---
 
@@ -109,7 +109,7 @@ kubefedctl federate ns demo --host-cluster-context aws-cluster
 Create a `nginx` deployment that spans both clusters.
 
 Save this as `nginx-deployment.yaml`:
-\`\`\`yaml
+
 apiVersion: types.kubefed.io/v1beta1
 kind: FederatedDeployment
 metadata:
@@ -130,12 +130,12 @@ spec:
           containers:
           - name: nginx
             image: nginx
-\`\`\`
+
 
 Apply the deployment:
-\`\`\`bash
+
 kubectl apply -f nginx-deployment.yaml --context=aws-cluster
-\`\`\`
+
 
 ---
 
@@ -143,14 +143,14 @@ kubectl apply -f nginx-deployment.yaml --context=aws-cluster
 Check the pods on both clusters.
 
 #### On AWS:
-\`\`\`bash
+
 kubectl get pods -n demo --context=aws-cluster
-\`\`\`
+
 
 #### On Google Cloud:
-\`\`\`bash
+
 kubectl get pods -n demo --context=gke-cluster
-\`\`\`
+
 
 You should see `nginx` pods running in both clusters.
 
